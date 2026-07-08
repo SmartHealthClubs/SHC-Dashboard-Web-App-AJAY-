@@ -1,0 +1,63 @@
+/* ---- SHC brand tokens (May 2024 brand guidelines) ----
+   Ported verbatim from the React app's src/index.css — this file is the
+   single source of truth for brand color/spacing tokens. PrimeNG components
+   are bridged to these same values via src/theme/shc-preset.ts, so a design
+   change here only needs to happen once. */
+:root {
+  --color-brand-cyan: #43c1e8;
+  --color-brand-blue: #3d8fed;
+  --color-brand-navy: #1e2f51;
+  --color-brand-pale: #dafbff;
+  --color-surface-grey: #f0f4f6;
+  --color-brand-gold: #ffc869;
+  --color-brand-orange: #ff914d;
+  --color-text-secondary: #555a5b;
+
+  /* Semantic status colors — added for the dashboard, not in the brand guide */
+  --color-status-positive: #1fb68a;
+  --color-status-negative: #e5544b;
+  --color-status-warning: #ffc869;
+
+  --color-background: var(--color-surface-grey);
+  --color-foreground: var(--color-brand-navy);
+  --color-card: #ffffff;
+  --color-border: #e1e8ec;
+  --color-ring: var(--color-brand-blue);
+
+  --font-heading: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Montserrat Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Matches the React app's shadcn --radius scale (base 0.875rem), so
+     "rounded-2xl"-equivalent surfaces stay pixel-identical. */
+  --radius: 0.875rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+}
+
+/* ---- Brand gradients (use sparingly — hero / brand / emphasis moments only) ---- */
+.bg-gradient-brand {
+  background-image: linear-gradient(135deg, var(--color-brand-cyan), var(--color-brand-blue));
+}
+.bg-gradient-soft {
+  background-image: linear-gradient(135deg, var(--color-brand-pale), var(--color-brand-cyan));
+}
+.bg-gradient-cta {
+  background-image: linear-gradient(135deg, var(--color-brand-gold), var(--color-brand-orange));
+}
+
+* {
+  border-color: var(--color-border);
+}
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}

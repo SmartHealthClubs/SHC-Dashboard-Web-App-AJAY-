@@ -1,0 +1,9 @@
+<div class="pill-select-host flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1 text-sm font-medium text-brand-navy transition-colors hover:bg-surface-grey">
+  <lucide-icon [img]="CalendarRange" class="size-3.5 shrink-0 text-brand-blue"></lucide-icon>
+  <p-select
+    [options]="options()"
+    [ngModel]="value()"
+    (ngModelChange)="valueChange.emit($event)"
+    [checkmark]="true"
+  />
+</div>

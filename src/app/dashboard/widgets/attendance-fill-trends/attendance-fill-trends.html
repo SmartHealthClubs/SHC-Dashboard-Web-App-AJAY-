@@ -1,0 +1,34 @@
+<div class="flex min-w-72 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <div class="flex items-center gap-1.5">
+        <p class="text-sm text-text-secondary">Attendance & fill trends</p>
+        <p-tag severity="secondary" value="Classes & Programs" />
+      </div>
+      <p class="mt-1 font-heading text-3xl font-semibold text-brand-navy">
+        {{ data().totalAttendees.toLocaleString() }}
+      </p>
+      <p class="text-xs text-text-secondary">attendees</p>
+    </div>
+    <div class="h-12 w-28 shrink-0">
+      <p-chart type="line" [data]="chartData()" [options]="SPARKLINE_OPTIONS" [height]="'48px'" />
+    </div>
+  </div>
+
+  <div
+    class="flex items-center gap-1 text-sm font-medium"
+    [class.text-status-positive]="isUp()"
+    [class.text-status-negative]="!isUp()"
+  >
+    <lucide-icon [img]="isUp() ? TrendingUp : TrendingDown" class="size-4"></lucide-icon>
+    {{ formatPercent(data().trendPct) }} {{ trendLabelText() }}
+  </div>
+
+  <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-text-secondary">
+    <span><span class="font-medium text-brand-navy">{{ data().totalNonAttendee }}</span> no-shows</span>
+    <span><span class="font-medium text-brand-navy">{{ data().totalCancellations }}</span> cancellations</span>
+    <span><span class="font-medium text-brand-navy">{{ data().totalLateCancellation }}</span> late cancels</span>
+  </div>
+
+  <app-report-link label="View full Attendance report" />
+</div>

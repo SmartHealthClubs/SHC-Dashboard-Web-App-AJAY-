@@ -1,0 +1,48 @@
+@if (enabled()) {
+  <div class="flex min-w-72 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-sm text-text-secondary">Reward Points</p>
+        <p class="mt-1 font-heading text-3xl font-semibold text-brand-navy">
+          {{ data().totalAwarded.toLocaleString() }}
+        </p>
+        <p class="text-xs text-text-secondary">points awarded</p>
+      </div>
+      <div class="h-12 w-28 shrink-0">
+        <p-chart type="line" [data]="chartData()" [options]="SPARKLINE_OPTIONS" [height]="'48px'" />
+      </div>
+    </div>
+
+    <div
+      class="flex items-center gap-1 text-sm font-medium"
+      [class.text-status-positive]="isUp()"
+      [class.text-status-negative]="!isUp()"
+    >
+      <lucide-icon [img]="isUp() ? TrendingUp : TrendingDown" class="size-4"></lucide-icon>
+      {{ formatPercent(data().trendPct) }} {{ trendLabel() }}
+    </div>
+
+    <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-text-secondary">
+      <span>
+        <span class="font-medium text-brand-navy">{{ data().totalRedeemed.toLocaleString() }}</span> redeemed
+      </span>
+      <span>
+        <span class="font-medium text-brand-navy">{{ data().totalExpiring.toLocaleString() }}</span> expiring
+      </span>
+    </div>
+
+    <div class="flex flex-col gap-1 border-t border-border pt-2">
+      <p class="text-xs font-medium tracking-wide text-text-secondary uppercase">Recent point-earning moments</p>
+      @for (moment of data().recentMoments; track moment.id) {
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span class="truncate text-brand-navy">{{ moment.memberName }} · {{ moment.rewardType }}</span>
+          <span class="shrink-0 text-text-secondary">
+            {{ moment.awardedPoints > 0 ? '+' + moment.awardedPoints : '-' + moment.redeemedPoints }}
+          </span>
+        </div>
+      }
+    </div>
+
+    <app-report-link label="View full Loyalty report" />
+  </div>
+}

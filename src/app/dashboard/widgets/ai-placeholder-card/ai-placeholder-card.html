@@ -1,0 +1,12 @@
+<div class="col-span-full flex items-center gap-4 rounded-2xl border border-brand-cyan/30 bg-gradient-soft p-6">
+  <div class="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/70">
+    <lucide-icon [img]="icon()" class="size-5 text-brand-blue"></lucide-icon>
+  </div>
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-center gap-2">
+      <h3 class="font-heading text-base font-semibold text-brand-navy">{{ title() }}</h3>
+      <span class="rounded-full bg-white/70 px-2 py-0.5 text-xs font-medium text-brand-blue">Coming soon</span>
+    </div>
+    <p class="mt-1 text-sm text-brand-navy/70">{{ description() }}</p>
+  </div>
+</div>

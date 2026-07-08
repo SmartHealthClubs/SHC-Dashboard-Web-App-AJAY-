@@ -1,0 +1,44 @@
+<div class="flex min-h-32 min-w-56 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+  <div class="flex items-center justify-between gap-2">
+    <p class="text-sm text-text-secondary">Coverage gaps</p>
+    @if (pendingCount() > 0) {
+      <p-tag severity="danger" [value]="pendingCount() + ' pending'" />
+    }
+  </div>
+
+  @if (rows().length === 0) {
+    <p class="text-sm text-text-secondary">No coverage gaps right now.</p>
+  } @else {
+    <div class="flex flex-col divide-y divide-border">
+      @for (row of rows(); track row.id) {
+        <div class="flex items-center justify-between gap-3 py-2">
+          <div class="flex min-w-0 items-start gap-2">
+            <lucide-icon
+              [img]="row.type === 'unstaffed' ? AlertTriangle : Repeat"
+              class="mt-0.5 size-4 shrink-0"
+              [class.text-status-negative]="row.type === 'unstaffed'"
+              [class.text-brand-blue]="row.type !== 'unstaffed'"
+            ></lucide-icon>
+            <div class="min-w-0">
+              <p class="truncate font-medium text-brand-navy">{{ row.className }}</p>
+              <p class="truncate text-xs text-text-secondary">
+                {{ timeLabel(row.time) }}
+                @if (departmentName(row.departmentId); as dept) { · {{ dept }} }
+                @if (row.requestedBy) { · Requested by {{ row.requestedBy }} }
+              </p>
+            </div>
+          </div>
+
+          @if (statusOf(row) === 'pending') {
+            <div class="flex shrink-0 gap-1.5">
+              <p-button label="Approve" size="small" [outlined]="true" severity="success" (onClick)="resolve(row.id, 'approved')" />
+              <p-button label="Disapprove" size="small" [outlined]="true" severity="danger" (onClick)="resolve(row.id, 'denied')" />
+            </div>
+          } @else {
+            <p-tag [severity]="statusOf(row) === 'approved' ? 'secondary' : 'danger'" [value]="statusOf(row) === 'approved' ? 'Approved' : 'Denied'" />
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

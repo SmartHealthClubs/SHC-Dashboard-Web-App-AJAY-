@@ -1,0 +1,37 @@
+<div class="flex min-h-32 min-w-56 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+  <p class="text-sm text-text-secondary">Classes (today)</p>
+
+  @if (visible().length === 0) {
+    <p class="text-sm text-text-secondary">No classes scheduled today for this scope.</p>
+  } @else {
+    <div class="flex flex-col divide-y divide-border">
+      @for (row of visible(); track row.id) {
+        <div class="flex items-center justify-between gap-3 py-2">
+          <div class="min-w-0">
+            <p class="truncate font-medium text-brand-navy">{{ row.className }}</p>
+            <p class="truncate text-xs text-text-secondary">
+              {{ timeLabel(row.time) }}
+              @if (departmentName(row.departmentId); as dept) { · {{ dept }} }
+              @if (staffName(row.instructorId); as staff) { · {{ staff }} }
+            </p>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <span class="text-sm font-medium" [class]="fillTone(row.percentFull)">
+              {{ row.attendees }}/{{ row.capacity }} · {{ row.percentFull }}%
+            </span>
+            <span
+              class="flex size-6 items-center justify-center rounded-full text-text-secondary hover:bg-surface-grey"
+              pTooltip="Opens the class roster — not wired up in this mockup"
+            >
+              <lucide-icon [img]="ChevronRight" class="size-4"></lucide-icon>
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (rows().length > visible().length) {
+    <p class="text-xs text-text-secondary">+{{ rows().length - visible().length }} more today</p>
+  }
+</div>

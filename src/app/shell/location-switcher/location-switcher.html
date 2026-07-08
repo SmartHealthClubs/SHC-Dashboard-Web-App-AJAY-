@@ -1,0 +1,11 @@
+<div class="pill-select-host flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-sm font-medium text-brand-navy transition-colors hover:bg-surface-grey">
+  <lucide-icon [img]="MapPin" class="size-4 shrink-0 text-brand-blue"></lucide-icon>
+  <p-select
+    [options]="locations"
+    optionLabel="name"
+    optionValue="id"
+    [ngModel]="locationService.locationId()"
+    (ngModelChange)="locationService.setLocationId($event)"
+    [checkmark]="true"
+  />
+</div>

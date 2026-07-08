@@ -1,0 +1,25 @@
+@if (enabled()) {
+  <div class="flex min-h-32 min-w-56 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+    <p class="text-sm text-text-secondary">Milestones</p>
+
+    @if (visible().length === 0) {
+      <p class="text-sm text-text-secondary">No recent milestone achievements.</p>
+    } @else {
+      <div class="flex flex-col divide-y divide-border">
+        @for (row of visible(); track row.id) {
+          <div class="flex items-center gap-2 py-1.5">
+            <lucide-icon [img]="Award" class="size-4 shrink-0 text-brand-gold"></lucide-icon>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium text-brand-navy">{{ row.memberName }}</p>
+              <p class="truncate text-xs text-text-secondary">{{ row.badge }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (rows().length > visible().length) {
+      <p class="text-xs text-text-secondary">+{{ rows().length - visible().length }} more</p>
+    }
+  </div>
+}

@@ -1,0 +1,18 @@
+@if (isPlaceholder()) {
+  <div class="flex min-h-32 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border bg-white p-6 text-center">
+    <p class="font-medium text-brand-navy">{{ resolved().widget.title }}</p>
+    <p class="text-sm text-text-secondary">Coming soon — you're all caught up.</p>
+  </div>
+} @else {
+  <div class="flex min-h-32 min-w-56 flex-1 flex-col gap-2 rounded-2xl border border-border bg-white p-5">
+    <div class="flex items-start justify-between gap-2">
+      <p class="font-medium text-brand-navy">{{ resolved().widget.title }}</p>
+      <p-tag severity="secondary" [value]="renderModeLabel()" />
+    </div>
+    <p class="text-sm text-text-secondary">Not built yet — Step 4 fills this in.</p>
+    <div class="mt-auto flex flex-wrap items-center gap-1.5 pt-2">
+      <p-tag severity="secondary" [value]="scopeLabel()" />
+      <span class="text-xs text-text-secondary">via {{ unlockedByLabel() }}</span>
+    </div>
+  </div>
+}

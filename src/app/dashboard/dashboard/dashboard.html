@@ -1,0 +1,11 @@
+@if (roleService.activeRoles().length === 0) {
+  <div class="rounded-2xl border border-dashed border-border bg-white p-8 text-center text-text-secondary">
+    No roles selected — try the demo switcher above.
+  </div>
+} @else {
+  <div class="flex flex-col gap-8">
+    @for (resolvedZone of resolvedZones(); track resolvedZone.zone.id) {
+      <app-zone-section [zone]="resolvedZone.zone" [widgets]="resolvedZone.widgets" />
+    }
+  </div>
+}

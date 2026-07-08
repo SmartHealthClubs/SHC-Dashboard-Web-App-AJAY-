@@ -1,0 +1,24 @@
+<div class="flex min-h-32 min-w-56 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+  <p class="text-sm text-text-secondary">At-risk / lapsing members</p>
+
+  @if (visible().length === 0) {
+    <p class="text-sm text-text-secondary">No lapsing members for this scope.</p>
+  } @else {
+    <div class="flex flex-col divide-y divide-border">
+      @for (row of visible(); track row.id) {
+        <div class="flex items-center justify-between gap-3 py-1.5">
+          <p class="truncate font-medium text-brand-navy">{{ row.memberName }}</p>
+          <div class="flex shrink-0 flex-wrap justify-end gap-x-2 text-xs text-text-secondary">
+            <span>Check-in {{ daysAgo(row.lastCheckIn) }}d</span>
+            <span>Booking {{ daysAgo(row.lastBooking) }}d</span>
+            <span>App {{ daysAgo(row.lastAppOpen) }}d</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (rows().length > visible().length) {
+    <p class="text-xs text-text-secondary">+{{ rows().length - visible().length }} more</p>
+  }
+</div>

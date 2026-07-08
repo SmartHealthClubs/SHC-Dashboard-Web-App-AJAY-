@@ -1,1 +1,69 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource-variable/montserrat";
+
+@import "./styles/tokens.css";
+
+/* Maps Tailwind utility class names (text-brand-navy, bg-surface-grey, etc.)
+   to the brand tokens above — same bridging pattern the React app used via
+   its own `@theme inline` block, so widget templates can reuse the exact
+   same utility class names as the React JSX. */
+@theme inline {
+  --font-heading: var(--font-heading);
+  --font-sans: var(--font-sans);
+
+  --color-brand-cyan: var(--color-brand-cyan);
+  --color-brand-blue: var(--color-brand-blue);
+  --color-brand-navy: var(--color-brand-navy);
+  --color-brand-pale: var(--color-brand-pale);
+  --color-surface-grey: var(--color-surface-grey);
+  --color-brand-gold: var(--color-brand-gold);
+  --color-brand-orange: var(--color-brand-orange);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-status-positive: var(--color-status-positive);
+  --color-status-negative: var(--color-status-negative);
+  --color-status-warning: var(--color-status-warning);
+
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-card: var(--color-card);
+  --color-border: var(--color-border);
+  --color-ring: var(--color-ring);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+/* PrimeNG component resets that would otherwise fight the brand look */
+.p-component {
+  font-family: var(--font-sans);
+}
+
+/* Location switcher / period control: a PrimeNG p-select stripped of its own
+   chrome, dropped inside a hand-styled pill (icon + border + bg + radius) so
+   it reads as one control instead of two nested boxes. */
+.pill-select-host .p-select {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  min-width: 0;
+}
+.pill-select-host .p-select-label {
+  padding: 0;
+  font-weight: 500;
+  color: var(--color-brand-navy);
+}
+.pill-select-host .p-select-dropdown {
+  width: auto;
+  color: var(--color-text-secondary);
+}

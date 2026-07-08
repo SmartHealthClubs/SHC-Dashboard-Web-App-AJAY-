@@ -1,0 +1,26 @@
+@if (data().self; as self) {
+  <div class="flex min-w-72 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+    <p class="text-sm text-text-secondary">Instructor performance</p>
+    <p class="font-heading text-3xl font-semibold text-brand-navy">{{ self.fillPct }}%</p>
+    <p class="text-xs text-text-secondary">average fill, your classes only</p>
+    <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-text-secondary">
+      <span><span class="font-medium text-brand-navy">{{ self.attendees }}</span> attendees</span>
+      <span><span class="font-medium text-brand-navy">{{ self.sessions }}</span> sessions</span>
+    </div>
+    <app-report-link label="View full Attendance report" />
+  </div>
+} @else {
+  <div class="flex min-w-72 flex-1 flex-col gap-4 rounded-2xl border border-border bg-white p-5">
+    <p class="text-sm text-text-secondary">Instructor performance</p>
+
+    @if ((data().ranked ?? []).length === 0) {
+      <p class="text-sm text-text-secondary">No attendance data for this scope.</p>
+    } @else {
+      <div [style.height]="chartHeight((data().ranked ?? []).length)">
+        <p-chart type="bar" [data]="chartData()" [options]="chartOptions" />
+      </div>
+    }
+
+    <app-report-link label="View full Attendance report" />
+  </div>
+}

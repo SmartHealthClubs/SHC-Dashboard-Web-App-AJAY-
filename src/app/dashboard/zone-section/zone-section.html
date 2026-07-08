@@ -1,0 +1,80 @@
+<section class="flex flex-col gap-4">
+  <div class="flex items-center justify-between">
+    <h2 class="text-lg text-brand-navy">{{ zone().title }}</h2>
+    @if (zone().periodOptions; as periodOptions) {
+      <app-period-control [options]="periodOptions" [value]="effectivePeriod()" (valueChange)="setPeriod($event)" />
+    }
+  </div>
+
+  @if (statWidgets().length > 0) {
+    <div class="flex flex-wrap gap-4">
+      @for (resolved of statWidgets(); track resolved.widget.id) {
+        @switch (resolved.widget.id) {
+          @case ('revenue-glance') {
+            <app-revenue-glance [period]="effectivePeriod()" />
+          }
+          @case ('sales-by-department') {
+            <app-sales-by-department [period]="effectivePeriod()" />
+          }
+          @case ('attendance-fill-trends') {
+            <app-attendance-fill-trends [period]="effectivePeriod()" />
+          }
+          @case ('loyalty-points') {
+            <app-loyalty-points [scope]="resolved.scope" [period]="effectivePeriod()" />
+          }
+          @case ('payroll-ptd') {
+            <app-payroll-ptd [scope]="resolved.scope" />
+          }
+          @case ('instructor-performance') {
+            <app-instructor-performance [scope]="resolved.scope" [period]="effectivePeriod()" />
+          }
+          @default {
+            <app-widget-placeholder-card [resolved]="resolved" />
+          }
+        }
+      }
+    </div>
+  }
+
+  @if (otherWidgets().length > 0) {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (resolved of otherWidgets(); track resolved.widget.id) {
+        @switch (resolved.widget.id) {
+          @case ('classes-today') {
+            <app-classes-today [scope]="resolved.scope" />
+          }
+          @case ('services-today') {
+            <app-services-today [scope]="resolved.scope" />
+          }
+          @case ('coverage-gaps') {
+            <app-coverage-gaps [scope]="resolved.scope" />
+          }
+          @case ('recent-signups') {
+            <app-recent-signups [scope]="resolved.scope" [period]="effectivePeriod()" />
+          }
+          @case ('at-risk-members') {
+            <app-at-risk-members [scope]="resolved.scope" />
+          }
+          @case ('loyalty-milestones') {
+            <app-loyalty-milestones [scope]="resolved.scope" />
+          }
+          @case ('program-cohort-fill') {
+            <app-program-cohort-fill [scope]="resolved.scope" />
+          }
+          @case ('front-desk-board') {
+            <app-front-desk-board />
+          }
+          @case ('briefing-placeholder') {
+            <app-briefing-placeholder />
+          }
+          @case ('highlights-placeholder') {
+            <app-highlights-placeholder />
+          }
+          @default {
+            <app-widget-placeholder-card [resolved]="resolved" />
+          }
+        }
+      }
+    </div>
+  }
+</section>

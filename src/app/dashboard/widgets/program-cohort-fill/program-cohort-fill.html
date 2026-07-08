@@ -1,0 +1,28 @@
+<div class="flex min-h-32 min-w-56 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5 lg:col-span-3">
+  <p class="text-sm text-text-secondary">Program & cohort fill</p>
+
+  @if (visible().length === 0) {
+    <p class="text-sm text-text-secondary">No active cohorts for this scope.</p>
+  } @else {
+    <div class="flex flex-col divide-y divide-border">
+      @for (row of visible(); track row.id) {
+        <div class="flex items-center justify-between gap-3 py-2">
+          <div class="min-w-0">
+            <p class="truncate font-medium text-brand-navy">{{ row.program }} — {{ row.cohortName }}</p>
+            <p class="truncate text-xs text-text-secondary">
+              {{ departmentName(row.departmentId) }}
+              @if (scope() === 'all') { · {{ locationName(row.locationId) }} }
+            </p>
+          </div>
+          <span class="shrink-0 text-sm font-medium" [class]="fillTone(row.percentFull)">
+            {{ row.signups }}/{{ row.capacity }} · {{ row.percentFull }}%
+          </span>
+        </div>
+      }
+    </div>
+  }
+
+  @if (rows().length > visible().length) {
+    <p class="text-xs text-text-secondary">+{{ rows().length - visible().length }} more</p>
+  }
+</div>

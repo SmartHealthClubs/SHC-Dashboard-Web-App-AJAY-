@@ -1,11 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { AppShell } from './shell/app-shell/app-shell';
+import { Dashboard } from './dashboard/dashboard/dashboard';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  imports: [AppShell, Dashboard],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
-export class App {
-  protected readonly title = signal('shc-dashboard-angular');
-}
+export class App {}

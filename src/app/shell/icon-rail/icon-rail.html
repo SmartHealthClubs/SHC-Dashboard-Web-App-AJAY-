@@ -1,0 +1,18 @@
+<div class="flex items-center gap-1">
+  @for (item of items; track item.label) {
+    <button
+      type="button"
+      class="relative flex size-9 items-center justify-center rounded-full text-brand-navy transition-colors hover:bg-surface-grey"
+      [pTooltip]="item.label"
+      tooltipPosition="bottom"
+    >
+      <lucide-icon [img]="item.icon" class="size-5"></lucide-icon>
+      @if (item.dot) {
+        <span class="absolute top-2 right-2 size-1.5 rounded-full bg-status-negative"></span>
+      }
+    </button>
+  }
+  <button type="button" class="ml-1 rounded-full" pTooltip="Jordan Smith" tooltipPosition="bottom">
+    <p-avatar label="JS" shape="circle" styleClass="!size-9 !bg-brand-blue !text-white !text-sm !font-semibold" />
+  </button>
+</div>

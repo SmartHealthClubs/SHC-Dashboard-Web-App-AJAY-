@@ -1,0 +1,19 @@
+<div class="flex min-w-72 flex-1 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
+  <div>
+    <p class="text-sm text-text-secondary">Payroll period-to-date</p>
+    <p class="mt-1 font-heading text-3xl font-semibold text-brand-navy">{{ formatCurrency(data().totalPay) }}</p>
+    <p class="text-xs text-text-secondary">
+      {{ PAYROLL_PERIOD_LABEL }}
+      @if (scope() !== 'mine') { · {{ data().staffCount }} staff }
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-text-secondary">
+    <span><span class="font-medium text-brand-navy">{{ formatCurrency(data().classPay) }}</span> class</span>
+    <span><span class="font-medium text-brand-navy">{{ formatCurrency(data().programPay) }}</span> program</span>
+    <span><span class="font-medium text-brand-navy">{{ formatCurrency(data().privatePay) }}</span> private</span>
+    <span><span class="font-medium text-brand-navy">{{ formatCurrency(data().semiPrivatePay) }}</span> semi-private</span>
+  </div>
+
+  <app-report-link label="View full Staff Payroll report" />
+</div>

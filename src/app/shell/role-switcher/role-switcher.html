@@ -1,0 +1,33 @@
+<button
+  type="button"
+  class="flex max-w-72 items-center gap-1.5 rounded-full border border-dashed border-brand-blue/50 bg-brand-pale/60 px-3 py-1.5 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-pale"
+  (click)="popover.toggle($event)"
+>
+  <lucide-icon [img]="FlaskConical" class="size-4 shrink-0 text-brand-blue"></lucide-icon>
+  <span class="truncate">Viewing as: {{ summary() }}</span>
+  <lucide-icon [img]="ChevronDown" class="size-3.5 shrink-0 text-text-secondary"></lucide-icon>
+</button>
+
+<p-popover #popover>
+  <div class="flex w-72 flex-col gap-0.5 p-1">
+    <p class="px-1.5 py-1 text-xs font-medium text-text-secondary">
+      Demo control — not part of the product
+    </p>
+    <hr class="-mx-1 my-1 border-border" />
+    @for (role of roles; track role.id) {
+      <label
+        class="flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1.5 text-sm hover:bg-surface-grey"
+      >
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="isChecked(role.id)"
+          (ngModelChange)="roleService.toggleRole(role.id)"
+        />
+        <span class="flex flex-col">
+          <span class="font-medium text-brand-navy">{{ role.label }}</span>
+          <span class="text-xs text-text-secondary">{{ role.description }}</span>
+        </span>
+      </label>
+    }
+  </div>
+</p-popover>

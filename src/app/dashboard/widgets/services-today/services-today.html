@@ -1,0 +1,39 @@
+<div class="col-span-full flex min-h-32 flex-col gap-4 rounded-2xl border border-border bg-white p-5 sm:col-span-2">
+  <p class="text-sm text-text-secondary">Services (today)</p>
+
+  @if (grouped().length === 0) {
+    <p class="text-sm text-text-secondary">No service bookings today for this scope.</p>
+  } @else {
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      @for (group of grouped(); track group.type) {
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 border-b border-brand-blue/20 pb-2">
+            <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-pale">
+              <lucide-icon [img]="TYPE_ICONS[group.type]" class="size-3.5 text-brand-blue"></lucide-icon>
+            </span>
+            <p class="font-heading text-sm font-semibold tracking-wide text-brand-navy uppercase">
+              {{ TYPE_LABELS[group.type] }}
+            </p>
+          </div>
+          <div class="flex flex-col divide-y divide-border">
+            @for (row of group.visible; track row.id) {
+              <div class="flex items-center justify-between gap-3 py-1.5">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-medium text-brand-navy">{{ row.resourceName }}</p>
+                  <p class="truncate text-xs text-text-secondary">
+                    {{ timeLabel(row.time) }} · {{ row.clients.join(', ') }}
+                    @if (scope() === 'all') { · {{ locationName(row.locationId) }} }
+                  </p>
+                </div>
+                <span class="shrink-0 text-xs text-text-secondary">{{ row.clients.length }}/{{ row.capacity }}</span>
+              </div>
+            }
+          </div>
+          @if (group.rows.length > group.visible.length) {
+            <p class="text-xs text-text-secondary">+{{ group.rows.length - group.visible.length }} more</p>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
