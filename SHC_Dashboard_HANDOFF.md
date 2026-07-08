@@ -1,244 +1,200 @@
 # HANDOFF
 
-## API wiring phase: ACTIVE — 2 of ~13 widgets wired
+## Current state: Angular + PrimeNG, 3 of ~17 widgets wired to live staging
 
-### BLOCKER RESOLVED: `__APP_UPDATE_REQUIRED` 401
-**Root cause**: the dev proxy identified itself as the mobile app (`X-Device: android`,
-`X-Device-Api-Version: 1`, plus app-version/build/network/auth-key headers), which triggered the
-API's app-version gate and rejected every request.
-**Fix**: proxy now sends `X-Device: external-api-access`, `X-Device-Api-Version: 79`, and omits
-`X-Device-App-Version` / `X-Device-Build` / `X-Device-Network` / `X-Device-Auth-Key` entirely.
-**Confirmed working end-to-end**: auth (`Authorization: Basic` from `.env`), host
-(`staging-cir-wa.smarthealthclubs.com` — note the "-wa," a similarly-named but wrong
-`staging-cir.smarthealthclubs.com` host exists, don't confuse them), and scoping
-(`fitnessCenterId=38`, injected by the proxy's `rewrite` function from `.env` — widgets never need
-to read or hardcode it themselves) have all returned real `200`s with real data. Diagnosis sequence
-(device headers omitted entirely → 400 "Invalid device request"; api-version 2 and 3 tried → still
-401; finally the `external-api-access` identity → 200) is in git history if ever needed again.
+This repo is now the **production-track Angular port** of the SHC Staff Dashboard, built from an
+approved React/Vite prototype (a sibling repo, `../shc-dashboard`, kept around only as the
+visual/behavioral reference — not touched by this port and not part of this codebase going
+forward). The port reproduces the approved UI (layout, spacing, colors, typography, interactions)
+using Angular (latest — v22, standalone components, signals, built-in `@if`/`@for`/`@switch`
+control flow) + PrimeNG, themed to the SHC brand via a custom preset. `ng build` is clean — no
+errors or warnings.
 
-### Established repeatable pattern, per widget
-1. Extract the relevant section from `shc-reports-api-full.pdf` into `docs/api/<name>.md` (just
-   that section — not the whole 92-page doc at once).
-2. Wire the widget: swap its data source only, visual layout/styling untouched.
-3. Confirm with live `curl`/`fetch` calls against staging (no dev server, no browser tooling).
-4. Log any gaps/simplifications found along the way in the running list below.
-5. Commit once per widget.
+Read `SHC_Dashboard_Build_Brief.md` for the original product spec and `README.md` for run steps
+and where things live in this repo. This file (the handoff log) is the state snapshot: what's
+wired, what's still mock, what's known-broken or open, in enough detail that another team's
+Claude Code (or a human) can resume work without re-deriving any of it.
 
-### Infrastructure (done)
-- **Dev proxy** (`vite.config.ts`) — see "Blocker resolved" above for headers/host/scoping.
-  `defineConfig` is a function so it can call `loadEnv(mode, process.cwd(), '')` (empty prefix
-  loads every `.env` key, not just `VITE_`-prefixed ones) — these values are only ever read here in
-  Node, never passed through `define`/`import.meta.env`, so they can't end up in the client bundle.
-- **`.env.example`** (committed, placeholders only): `API_BASIC_AUTH`, `FITNESS_CENTER_ID`.
-  **`.gitignore`** covers `.env`/`.env.*` (keeping `.env.example`) and now also
-  `shc-reports-api-full.pdf` (the internal API doc the user dropped in the project folder — meant
-  as reference material, not for the repo).
+### Port history (chronological, brief — see `git log` for full detail per commit)
+1. **Initial port** — full Angular + PrimeNG rebuild from the React reference: role-aware
+   architecture (widget registry, union-of-roles + broadest-scope-wins, conditional zone
+   rendering), the mock data layer, all 17 widget slots, and the 3 live-wired widgets carried over
+   with every hard-won API fix intact (see below). The dev proxy was ported from the React app's
+   Vite config to `proxy.conf.js` (Angular's dev-server also runs on Vite internally, so this is a
+   direct port, not a reimplementation).
+2. **Cosmetic cleanup pass** — closed gaps between PrimeNG's stock component chrome and the
+   original shadcn look: dropdown pill styling (role switcher, location switcher, period control),
+   an outline `p-tag` variant (PrimeNG has no built-in one), and exact-hex Approve/Disapprove
+   buttons on Coverage gaps instead of PrimeNG's stock severity colors.
+3. **Layout regression fix** — found and fixed a systemic bug where widget cards weren't filling
+   their zone row/column (stat cards stayed narrow and left-aligned; Services/Program & cohort
+   fill's column spans didn't apply). **Root cause**: every widget's sizing classes (`flex-1`,
+   `col-span-2`, `lg:col-span-3`, `mt-auto`) live on the template's root `<div>`, ported verbatim
+   from the React JSX — but in Angular that div sits one level inside the component's own host tag
+   (`<app-revenue-glance>`), which is the actual flex/grid item the zone layout sees. The unstyled
+   host defaulted to shrink-to-fit sizing, leaving those classes inert. Fixed with `display:
+   contents` on every widget host (`src/styles.css`) so the inner div becomes the real flex/grid
+   item — restores exact parity with React's flat DOM shape, no template changes needed. Also
+   restored the persistent bar-end value labels (`chartjs-plugin-datalabels`) that Recharts'
+   `<LabelList>` provided and Chart.js has no built-in equivalent for, on both Instructor
+   performance and Sales by department.
 
-### Widget 1 DONE — Revenue at a glance (Zone 3, Money) — commit `108be06`
-Wired to `GET /v2/reports/orderStatistics` via 3 parallel calls (`statusType=success/failed/
-refunded`) run with `Promise.all`. **All from this one endpoint** — the separately-planned
-payments-received endpoint is **not needed** (spec correction for the backend work-list: drop it).
-`success.totalAmount`/`clubAmount`/`totalTransactions` feed the primary line; `failed.totalAmount`/
-`refunded.totalAmount` feed the secondary line. Visual layout/styling untouched — only the data
-layer changed. Confirmed against live staging (Last 30 days as of that day): success 48 txns /
-$5,846.99, failed 11 txns / $452, refunded 1 txn / −$160 — all `200`s.
+## The 3 live connections (carried over from React, hard-won — do not regress)
 
-`src/lib/period.ts` gained `apiDateRangeForPeriod(period, now)`, mapping the period selector to the
-real API's `fromDate`/`toDate` format (`D-MMM-YY`, no zero-padded day — e.g. `1-Jun-26`, matching
-the doc's own examples). Purely additive — doesn't touch the existing weekIndex/dayWindow functions
-the still-mock widgets use.
+All three: **Admin/all-club scope only** (`locations`/`department` blank) — Manager
+department-scoping is a `// TODO` at the exact line in each widget's `.ts` file, waiting on a real
+logged-in-user department identity, which doesn't exist yet (no auth/login built). All three read
+`fitnessCenterId` from the dev proxy, never hardcoded in widget code.
 
-`docs/api/orders-report.md` documents this endpoint (query params, response shape) — extracted
-from the API doc, not the whole doc.
+### Dev proxy (`proxy.conf.js`)
+Forwards `/api/*` to `https://staging-cir-wa.smarthealthclubs.com/v2` (note the `-wa` — a
+similarly-named but wrong `staging-cir.smarthealthclubs.com` host exists). Injects, server-side
+only, in Node:
+- `Authorization: Basic <API_BASIC_AUTH>` (from `.env`, gitignored, never committed or printed)
+- `X-Device: external-api-access`, `X-Device-Api-Version: 79` — **fixes a real blocker**: the
+  proxy previously identified itself as the mobile app (`X-Device: android`,
+  `X-Device-Api-Version: 1`, plus app-version/build/network/auth-key headers), which triggered the
+  API's app-version gate and rejected every request with `__APP_UPDATE_REQUIRED` (401). Do not
+  regress these two header values.
+- `fitnessCenterId` query param (from `.env`) — injected into every proxied request's query string
+  via the proxy's `rewrite` function; widgets never read or hardcode it themselves.
 
-### Widget 2 DONE — Sales by department (Zone 3, Money)
-**Spec correction from the feasibility investigation, now acted on**: the aggregate
-`GET /v2/reports/orderSummarySalesByDepartment` endpoint documented in
-`docs/api/sales-by-department.md` was **rejected as inaccurate** — this widget instead wires to the
-**line-item Order Report** (`GET /v2/reports/orderReport`, `statusType=success`, full detail now
-added to `docs/api/orders-report.md`), aggregating rows client-side. This delivers the redesign the
-feasibility doc called "buildable": member/non-member sub-line (replacing the old fixed Club/
-Stripe/Apple/Google processor split) and a real payment-method breakdown on hover (using whatever
-`PaymentMethod` values actually come back, not a fixed 4-processor list). Membership tier
-(VIP/Gold) is still not attempted — `// TODO` in the widget, same backend gap the feasibility doc
-already identified.
+**This is a dev-only mechanism.** `ng build` produces a static SPA with no server component —
+`proxy.conf.js` only runs under `ng serve`. **Before any production deployment, the Basic Auth
+credential needs a real backend-for-frontend (BFF)** to hold it server-side and proxy these calls;
+shipping it inside a static browser bundle would expose it to anyone who opens dev tools. This is
+listed again in the gap list below — it's the single most important item before this goes to prod.
 
-**Pagination implemented and required**: loops `skip`/`nextSkip` while `nextPage` is `true`, with a
-50-page safety cap (logs and stops rather than looping forever if the API ever misbehaves).
-Visual layout/styling untouched — same bar chart, same header, same card shell; only the sub-line
-content and the new hover changed, both per explicit instruction.
+### Revenue at a glance (Money zone) — `src/app/dashboard/widgets/revenue-glance/`
+`GET /v2/reports/orderStatistics`, 3 parallel calls (`statusType=success/failed/refunded`).
+`success.totalAmount`/`clubAmount`/`totalTransactions` feed the primary line;
+`failed.totalAmount`/`refunded.totalAmount` feed the secondary line. **Gross of refunds** (refunds
+shown as their own line, not netted out — see gap list). Trend %/sparkline are flat (`// TODO`) —
+a single-range aggregate call has no historical series to plot.
 
-**BUG FOUND AND FIXED shortly after the initial wiring**: the first version read `row.Barcode` for
-member classification, matching the PDF doc's field name — but the live API actually returns this
-field as **`UserBarcode`**, not `Barcode`. Since `row.Barcode` was always `undefined`, every single
-row silently classified as non-member (100% non-member, $0 member revenue) — a real, live-shape
-doc-drift bug, not a logic error in the classification rule itself. Confirmed by fetching a real
-page and inspecting actual key names (`UserBarcode`, type `string | null` — the API's `User*`
-prefix pattern also renames other doc fields we don't currently use, e.g. `AgreementNumber` →
-`UserAgreementNumber`, `MemberName` → `UserFullName`). Fixed by reading the correct key. Verified
-against a user-supplied ground truth (Jul 1–7, 2026: expected $113 member revenue across 4 orders)
-— **matched exactly** after the fix.
+### Sales by department (Money zone) — `src/app/dashboard/widgets/sales-by-department/`
+`GET /v2/reports/orderReport` (line-item, `statusType=success`), **paginated** (`skip`/`nextSkip`
+while `nextPage` is `true`, 50-page safety cap), aggregated client-side by `Department`.
+Member/non-member split via **`UserBarcode`** (non-empty and not literally `"Non-member"` =
+member) — **not** the PDF's documented `Barcode` field name, which doesn't exist live (a real bug
+was found and fixed here during the original build: reading `Barcode` silently read `undefined` on
+every row, misclassifying 100% of revenue as non-member). Payment-method breakdown available on
+hover per department. Membership tier (VIP/Gold/etc.) is unavailable from this endpoint — `// TODO`
+in the widget, see gap list.
 
-**Confirmed against live staging, corrected** (Last 30 days as of that day):
+### Attendance & fill trends (People zone) — `src/app/dashboard/widgets/attendance-fill-trends/`
+`GET /v2/reports/memberBookingReport`, **paginated** (`skip`/`nextSkip`/`nextPage`, same pattern),
+**client-side rollup** — the PDF documents five top-level summary fields
+(`totalAttendees`/`totalNonAttendee`/`totalCancellations`/`totalWaitlisted`/`totalLateCancellation`)
+but **they do not exist in the live response at all**, confirmed across every `status`/date variant
+tried — the live top level only ever has `skip`/`nextSkip`/`nextPage`. So this widget pages through
+`bookingMembers[]` and counts client-side instead:
+- `AttendanceStatus === "attended"` → attended
+- `AttendanceStatus === "not-attended"` → no-show
+- `IsLateCancelled === true` → late-cancelled
+- `BookingStatus === "cancelled"` (excluding rows already counted as late-cancelled) → cancelled
 
-| Department | Total | Member | Non-member |
-|---|---|---|---|
-| FitnessTraining | $5,090.00 | $4,025.00 | $1,065.00 |
-| Swim | $160.00 | $0.00 | $160.00 |
-| SalonAndSpa | $144.00 | $144.00 | $0.00 |
-| Membership | $120.00 | $120.00 | $0.00 |
-| Cafe | $118.99 | $98.24 | $20.75 |
-| Tennis | $105.00 | $105.00 | $0.00 |
-| GroupExercise | $93.00 | $66.00 | $27.00 |
-| SwimLanes | $16.00 | $16.00 | $0.00 |
+**Findings not previously recorded in this file** (from the live wiring/verification work):
+- **`AttendanceStatus`'s live enum is lowercase and different wording than the PDF** — live values
+  seen: `""` (unmarked/upcoming), `"attended"`, `"not-attended"` — not the PDF's `"Attended"`/
+  `"No Show"`/etc. `BookingStatus` live values: `"confirmed"`, `"cancelled"`, `"transferred"` — not
+  the PDF's `"Confirmed"`/`"Cancelled"`. A `"transferred"` booking counts toward nothing in the
+  rollup (matches neither attended, no-show, nor cancelled) — a deliberate v1 simplification, not
+  a bug. No live-verified value for "waitlisted" was ever observed — waitlisted is dropped from v1
+  for that reason (no data to trust yet, not that it's unimportant).
+- **Further `User*` prefix renames confirmed live on this endpoint's line items**, beyond the
+  `UserBarcode` one already known from Order Report: the live `bookingMembers[]` row shape uses
+  `UserId`, `UserEmail`, `UserFullName`, `UserName`, `UserBarcode`, `UserAgreementNumber`,
+  `UserClubAccountMemberId`, `UserMembershipTypes` — none of the PDF's `MemberName`/`Email`/
+  `Barcode`/`AgreementNumber`/`MembershipTypes` names exist live on this endpoint either. Not used
+  by this widget (which only reads `AttendanceStatus`/`BookingStatus`/`IsLateCancelled`, no
+  member-identity fields), but critical if any future widget drills into line items here.
+- Full inspection notes are in `docs/api/attendance-and-fill.md`; that file predates the live
+  verification and still describes the top-level totals as a (correctly flagged) open question —
+  this section is the live-confirmed answer.
 
-Grand total **$5,846.99** (member $4,574.24 / non-member $1,272.75) — grand total still matches
-Widget 1's `success.totalAmount` for the identical period exactly, a good cross-endpoint
-consistency signal that survived the fix.
+### Confirmed aggregates (Last 30 days, 9-Jun-26 → 8-Jul-26) — cross-checked, all consistent
+| Widget | Result |
+|---|---|
+| Revenue at a glance | success 48 txns / **$5,846.99**, failed 11 txns / $452, refunded 1 txn / −$160 |
+| Sales by department | grand total **$5,846.99** (member $4,574.24 / non-member $1,272.75) |
+| Attendance & fill trends | attended=2, no-show=1, cancelled=5, late-cancelled=0 |
 
-### Gap / follow-up list (running section — this is the audit's main output)
+Sales by department's grand total matches Revenue's `success.totalAmount` for the identical period
+exactly — a good cross-endpoint consistency signal, worth re-running whenever either widget's
+wiring changes.
+
+## Remaining widgets — 13 on mock data, 4 AI/placeholder slots
+
+Everything below runs on the ported mock data layer (`src/app/mock/*.ts` — same seeded RNG, same
+generated shapes as the React app, so numbers are stable across reloads but not real).
+
+**Built, on mock data** (`src/app/dashboard/widgets/`): Classes (today), Services (today), Program
+& cohort fill (Classes & Programs zone) · Recent signups, At-risk / lapsing members (People zone) ·
+Reward Points, Milestones (Loyalty zone) · Coverage gaps, Payroll period-to-date, Instructor
+performance (Staff & Operations zone) · Front Desk board (Front Desk zone, Front Desk role only).
+
+**Placeholder slots** (non-interactive "Coming soon" cards, no widget logic to wire): Morning
+Briefing (Briefing zone), Highlights & Anomalies (Highlights zone) — the two parked "AI" zones,
+Admin/Manager only — plus Loyalty's Challenges and Status features, which render via the generic
+placeholder fallback rather than a dedicated component.
+
+Suggested next endpoints per remaining widget, and the product decisions each one is blocked or
+not blocked on, are in `SHC_Dashboard_Build_Brief.md` and the API doc extracts in `docs/api/`. Do
+not wire another widget without explicit instruction on which one.
+
+## Gap / follow-up list (running section)
+
+- **Auth must move server-side (BFF) before production.** The dev proxy's Basic Auth credential
+  only stays out of the client bundle because `proxy.conf.js` runs in Node during `ng serve` — a
+  production static build has nowhere to hide it. This needs a real backend service in front of
+  the reports API before this app is deployed anywhere real users can inspect network traffic.
 - **Revenue figure is GROSS of refunds** (refunds shown as their own line, not netted out of the
-  headline total). Product decision pending: keep gross, or switch to net-of-refunds as the primary
-  number.
-- **Trend % and the sparkline are flat** on Revenue at a glance. `orderStatistics` returns a single
-  aggregate for the requested range, no historical series. Needs a second (prior-period) call when
-  we want a real trend; a real sparkline needs multiple historical ranges.
-- **Manager department-scoping is not built on either wired widget.** `// TODO` at the exact line
-  in both `revenue-glance.tsx` and `sales-by-department.tsx` — waiting on a real logged-in-user
-  department identity, which doesn't exist yet (no auth/login built). Both are Admin/all-club only
-  for now, regardless of which role is active in the demo role-switcher.
-- **API doc drift confirmed, twice now.** `orderStatistics` responses include undocumented
-  `discount`/`tipAmount`/`surchargeAmount` and omit documented `memoryUsage`. Separately, Order
-  Report's money fields are **inconsistently typed live** — plain numbers in some rows, `"$"`-
-  prefixed or empty strings in others — documented in `orders-report.md`, and every widget reading
-  them parses defensively (strip `$`/`,`, coerce, default to 0) rather than trusting the stated
-  type. **Treat live response shapes as source of truth over the PDF**, every time, per widget.
-- **`fitnessCenterId=38` is assumed to scope to one test centre** — not yet independently confirmed
+  headline total). Product decision pending: keep gross, or switch to net-of-refunds as the
+  primary number.
+- **No endpoint used so far returns a historical series.** Revenue's and Attendance's trend
+  %/sparklines are flat (`// TODO` in both widgets) — every one of these reports takes a single
+  `fromDate`/`toDate` range and returns one aggregate; a real trend needs a second (prior-period)
+  call, and a real sparkline needs multiple historical range calls (one per bucket).
+- **Manager department-scoping is not built on any of the 3 wired widgets.** `// TODO` at the exact
+  line in each widget's `.ts` file — waiting on a real logged-in-user department identity, which
+  doesn't exist yet (no auth/login built). All three are Admin/all-club only for now, regardless of
+  which role is active in the demo role-switcher.
+- **Treat live response shapes as source of truth over the PDF, every time, per endpoint.**
+  Confirmed doc drift more than once now: `orderStatistics` includes undocumented
+  `discount`/`tipAmount`/`surchargeAmount` fields and omits documented `memoryUsage`;
+  `memberBookingReport`'s documented top-level totals don't exist live at all (see above); member
+  identity fields are renamed with a `User*` prefix live on both Order Report and Member Booking
+  Report (`UserBarcode`, `UserFullName`, `UserEmail`, `UserAgreementNumber`, `UserMembershipTypes`,
+  etc. — never trust the PDF's un-prefixed names for member fields without checking a live
+  response first). Order Report's money fields are also **inconsistently typed live** — plain
+  numbers in some rows, `"$"`-prefixed or empty strings in others — every widget reading them
+  parses defensively (strip `$`/`,`, coerce to number, default to 0) rather than trusting the
+  stated type.
+- **`fitnessCenterId=38` is assumed to scope to one test centre** — never independently confirmed
   (e.g. by cross-checking against a known record count or a second fitness centre's different
   numbers). Watch this as more widgets come online; if numbers ever look implausible, this
   assumption is the first thing to re-check.
-- ~~Every row in Sales by department's confirming call classified as non-member.~~ **RESOLVED** —
-  this was a real bug (wrong field name, `Barcode` vs. live `UserBarcode`), not a data property.
-  Fixed and verified against a user-supplied ground truth. See Widget 2's section above for detail.
-  Left here, struck through, so anyone scanning this list's history can see it was investigated and
-  closed rather than silently dropped.
-- **`AgreementNumber`/`MemberName`/`Email` on Order Report are also live-renamed with a `User*`
-  prefix** (`UserAgreementNumber`/`UserFullName`/`UserEmail`), discovered while diagnosing the
-  barcode bug above. Not used by any widget today, but **anyone reading `docs/api/orders-report.md`
-  should not trust its non-`User*`-prefixed field names for this endpoint without checking a live
-  response first** — the doc still lists the old names since re-verifying every field there wasn't
-  in scope for this fix.
-- **Cross-endpoint consistency check passed once**: Widget 2's grand total ($5,846.99) exactly
-  matched Widget 1's `success.totalAmount` for the identical period. Good sign both endpoints agree
-  on the same underlying data — worth repeating this kind of check as more widgets come online.
-
-## Visual mockup phase: COMPLETE (prior phase — for reference)
-
-Every zone and widget in the v1 build brief has real content, verified across every role
-combination (Admin, Manager, Coach, Front Desk, and combinations of them) and, for Manager/Coach
-scope, across all 3 mock locations.
-
-Two UI-only items were later pulled off the deferred-polish list and finished (period selector
-"Today"/"Yesterday" options, Services-today heading prominence). Everything else on that list is
-untouched, staying deferred until real data is wired in.
-
-**Workflow rule, standing for the rest of this project**: verification is manual. The user checks
-changes visually in the browser themselves; no automated browser-testing agents are used (see
-`CLAUDE.md`, which persists this rule across sessions).
-
-## What's built, by zone
-
-- **Shell**: Tailwind v4 + brand tokens/fonts + shadcn/ui. Top bar (location switcher, role
-  switcher, icon rail) + left nav stub. Role switcher and location switcher both drive live
-  re-scoping across the whole dashboard — see `src/context/{role,location}-context.tsx`.
-- **Zone framework**: `src/lib/{scope,zones,widget-registry,dashboard}.ts` resolve which
-  zones/widgets show, and at what scope, from the active role selection — the "union of roles,
-  broadest scope wins" rule from the spec, as pure code, covered by `src/hooks/use-dashboard-zones.ts`.
-- **Mock data layer** (`src/mock/`): one file per report shape in the spec, generated relative to
-  "today" so the demo never looks stale, deterministic (seeded RNG) so numbers don't reshuffle on
-  reload.
-- **Money zone**: Revenue at a glance (hero card, sparkline, trend, Failed/Refunded line), Sales by
-  department (ranked bars, per-processor breakdown, "not connected" states).
-- **Classes & Programs zone** *(originally "Today")*: Classes (today) — fill-colored feed, per-row
-  roster-link stub. Services (today) — grouped by type, type-adaptive per club. Program & cohort
-  fill — fill-colored feed, strict per-coach scoping for "cohorts they run."
-- **People zone**: Recent signups (origin-segmented), Attendance & fill trends (hero card, labeled
-  "Classes & Programs" scope so it's never confused with services), At-risk / lapsing members (raw
-  last-activity signals, no invented risk threshold).
-- **Loyalty zone** *(split out from a combined "Programs & Loyalty" zone — see git history)*:
-  Reward Points and Milestones as two independent widgets (never blended — a club may run only
-  one), each rendering only if that club's location actually uses the mechanic. Challenges/Status
-  render as non-interactive "Coming soon" placeholders (not built, per spec).
-- **Staff & Operations zone**: Coverage gaps (Manager-only, inline Approve/Disapprove, pending
-  items always sorted first with an "N pending" badge — the single substitution surface in the
-  app), Payroll period-to-date (Admin all-club / Manager by department / Coach own PTD only),
-  Instructor performance (ranked bars for Admin/Manager; a *structurally separate*, simpler
-  self-only card for Coach — not just a filtered list — since the spec requires no peer ranking).
-- **Front Desk board** (Front Desk role only, sole widget in its zone, built to feel complete on
-  its own): class capacity, trainer availability, and resource availability blocks, each computed
-  live against today's bookings (`src/lib/availability.ts`); a prominent orange "Jump to Calendar"
-  CTA; a Point of Sale link-out (not embedded). No inline "add member" action — open decision, not
-  built.
-- **Briefing & Highlights** (the two parked AI zones): on-brand "coming soon" cards
-  (`ai-placeholder-card.tsx`), not real AI, per spec. Admin/Manager only — Coach and Front Desk
-  don't see them.
-
-Full chronological build history, every bug found/fixed, and every layout fix along the way is in
-`git log` — each commit message describes one step in detail. Not repeated here to keep this file
-usable as a snapshot rather than a diff.
-
-## Done since the visual phase closed (UI-only, no data changes)
-- **Period selector now offers "Today" and "Yesterday"**, globally, on every zone with a period
-  control — added via a single shared `PERIOD_OPTIONS` list in `src/lib/zones.ts` so it can't drift
-  out of sync across zones. Behavior differs by how granular the underlying mock data actually is:
-  - **Day-stamped data** (Recent signups — real per-day timestamps exist): "Today"/"Yesterday" are
-    exact bounded-day windows, computed by the new `dayWindowForPeriod()` in `src/lib/period.ts`.
-  - **Weekly-bucketed data** (Revenue, Sales by department, Attendance trends, Reward Points,
-    Instructor performance): the mock data's finest grain is a week, so "Today" and "Yesterday"
-    both resolve to the current week's bucket — the same numbers as "Last 7 days" for now. This is
-    a deliberate, documented approximation (see the comment at the top of `period.ts`), not a bug —
-    it'll naturally get real day-level precision once the API is wired in.
-- **Services (today)'s service-type headings are now visually prominent**: each type (Private
-  Appointments / Semi-Private / Equipment Booking / Court Booking) has its own icon in a pale badge
-  (person / people / dumbbell / dot, respectively), bolder navy heading text in the heading font,
-  and a colored underline — instead of small muted uppercase text that was easy to miss.
-
-## Deferred polish (logged, not acted on — data-dependent, waiting on API wiring)
-1. **Sales by department's sub-line is the wrong dimension.** Should break down by member/
-   non-member/membership tier instead of payment method, with payment method moved to hover.
-   **Now investigated against the real API** (see `docs/api/sales-by-department.md` →
-   "Redesign feasibility"): payment-method-on-hover is buildable today from the aggregate report
-   already planned for this widget; member/tier segmentation is **not supported by any endpoint
-   found so far** — blocked until a suitable report (e.g. members/agreements) is located. Not
-   acted on yet either way — this item stays deferred, now with a concrete answer instead of an
-   open question.
-2. **Services (today) should show commercial context, not booking mechanics** (content only — the
-   heading styling itself is now done, see above).
-   - Private / Semi-Private / Equipment rows: Service name, Client name, Trainer name, and the
-     client's remaining **session balance** for that service (prompts a repurchase conversation).
-   - Court rows: player/partner names and amount charged each — no session balance.
-   - **Data note**: session balance per client per service exists in the real API
-     (`SessionBalances.BalanceQuantity`), but the mock data doesn't carry a client + balance pair
-     per booking yet — needs adding, not just re-styling.
-3. **New People widget needed: non-attendance activity** — services usage, POS purchases, other
-   non-booking purchases, the commercial-activity counterpart to attendance. Shape TBD.
-
-## Open product decisions (not polish — need an actual answer before building)
-- **At-risk threshold**: still undefined by design (per spec §8). Whenever it's decided, the
-  definition should be able to draw on any activity signal — class attendance, service usage, POS,
-  app-open, check-in — not just booking-related ones.
-- **Front Desk inline "add member to class"**: not built. "Jump to Calendar" is the only booking
-  path today. Leaning toward jump-to-calendar per the original spec, but not finalized.
+- **Fill % is deferred.** `memberBookingReport` has no capacity/spots field at all. Fill % would
+  need a second call to `GET /v2/reports/attendanceReport` (which exposes per-event
+  `BookedSpots`/`TotalSpots`) and combining it with this widget's data — not attempted yet. See
+  `docs/api/attendance-and-fill.md`, "Fill %".
+- **Membership tier (VIP/Gold/etc.) is unavailable** from Order Report or any endpoint identified
+  so far — only member-vs-non-member (via `UserBarcode`) can be computed today. A members/
+  agreements report would be needed for tier; not yet located. `// TODO` in Sales by department.
+- **Cross-endpoint consistency check passed**: Sales by department's grand total exactly matched
+  Revenue's `success.totalAmount` for the identical period (see confirmed-aggregates table above).
+  Worth repeating this kind of check as more widgets come online.
 
 ## What's broken
-Nothing. All bugs found during the visual build (listed in git history) were fixed before moving
-on. `npm run lint` has 4 non-blocking, cosmetic-only Fast Refresh warnings (2 in shadcn vendor
-files, 1 each in `role-context.tsx`/`location-context.tsx`) that don't affect build or runtime.
-Production bundle is on the larger side since Recharts was added — a build-size warning, not an
-error, and not worth code-splitting effort for a mockup.
+
+Nothing currently known. `ng build` is clean (no errors or warnings). The layout regression
+described in "Port history" above was found and fixed in the same session it was introduced.
 
 ## Next exact step
-**Waiting on the user.** Both Money-zone widgets (Revenue at a glance, Sales by department) are now
-wired to real data and confirmed against staging. The Money zone is done. Do not wire another
-widget without explicit instruction on which one — likely next per the build order is the Classes
-& Programs zone, but wait to be told.
+
+**Waiting on the user.** All 3 planned live connections (Revenue at a glance, Sales by department,
+Attendance & fill trends) are wired and confirmed against staging; the visual/layout port is
+complete and verified via `ng build`. Do not wire another widget or touch the visual chrome without
+explicit instruction — see `SHC_Dashboard_Build_Brief.md` for the full v1 widget list and this
+file's gap list for open product decisions that block further wiring work.
