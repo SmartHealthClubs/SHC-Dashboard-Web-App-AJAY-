@@ -17,7 +17,7 @@
       <p class="text-sm text-text-secondary">No attendance data for this scope.</p>
     } @else {
       <div [style.height]="chartHeight((data().ranked ?? []).length)">
-        <p-chart type="bar" [data]="chartData()" [options]="chartOptions" />
+        <p-chart type="bar" [data]="chartData()" [options]="chartOptions" [plugins]="HORIZONTAL_BAR_PLUGINS" />
       </div>
     }
 

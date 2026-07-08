@@ -5,7 +5,7 @@ import { STAFF } from '@/mock/staff';
 import { LocationService } from '@/services/location.service';
 import { currentCoachId, departmentIdsForScope, matchesLocationScope } from '@/lib/widget-scope';
 import { weekIndexesForPeriod } from '@/lib/period';
-import { horizontalBarData, horizontalBarOptions } from '@/lib/chart-utils';
+import { HORIZONTAL_BAR_PLUGINS, horizontalBarData, horizontalBarOptions } from '@/lib/chart-utils';
 import { BAR_COLORS } from '@/lib/brand-colors';
 import { ReportLink } from '@/dashboard/report-link/report-link';
 import type { ScopeLevel } from '@/lib/scope';
@@ -81,6 +81,7 @@ export class InstructorPerformance {
   });
 
   protected readonly chartOptions = horizontalBarOptions((v) => `${v}%`, 100);
+  protected readonly HORIZONTAL_BAR_PLUGINS = HORIZONTAL_BAR_PLUGINS;
 
   protected chartHeight(rowCount: number): string {
     return `${Math.max(120, rowCount * 42)}px`;

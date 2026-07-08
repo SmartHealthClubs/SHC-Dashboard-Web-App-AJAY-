@@ -49,6 +49,44 @@ html {
   font-family: var(--font-sans);
 }
 
+/* ROOT FIX for the widget-card stretch/grid-span regression: Angular wraps
+   every component's template in a custom-element host tag (e.g.
+   <app-revenue-glance><div class="... flex-1 ...">...</div></app-revenue-glance>).
+   Our widget templates put their sizing classes (flex-1, col-span-2,
+   lg:col-span-3, col-span-full, mt-auto) on that INNER div — ported
+   verbatim from the React version's actual returned JSX node, which has no
+   such wrapper. But in zone-section's `.flex.flex-wrap` (stat row) and
+   `.grid` (feed row), the DIRECT child is the host tag, not the inner div —
+   so the real flex/grid item is an unstyled host that sizes to fit-content
+   (shrink-to-fit), leaving the inner div's flex-1/col-span classes inert:
+   cards stayed narrow and left-aligned, and Services/Program-cohort-fill's
+   column spans never applied.
+   `display: contents` removes each host from the box tree entirely, so its
+   child div becomes the actual flex/grid item — restoring exact parity with
+   React's flat DOM shape, with zero changes needed to the (already-correct)
+   Tailwind classes on every template root. */
+app-revenue-glance,
+app-sales-by-department,
+app-attendance-fill-trends,
+app-classes-today,
+app-services-today,
+app-coverage-gaps,
+app-recent-signups,
+app-at-risk-members,
+app-loyalty-points,
+app-loyalty-milestones,
+app-program-cohort-fill,
+app-payroll-ptd,
+app-instructor-performance,
+app-front-desk-board,
+app-briefing-placeholder,
+app-highlights-placeholder,
+app-widget-placeholder-card,
+app-ai-placeholder-card,
+app-report-link {
+  display: contents;
+}
+
 /* Location switcher / period control: a PrimeNG p-select stripped of its own
    chrome, dropped inside a hand-styled pill (icon + border + bg + radius) so
    it reads as one control — icon, label, chevron all inside a single
@@ -64,6 +102,13 @@ html {
 }
 
 .pill-select-host .p-select {
+  display: inline-flex;
+  align-items: center;
+  /* Matches the wrapper's own gap-1.5 (0.375rem) between icon/text/chevron —
+     stripping p-select-dropdown's default fixed width (below) removed
+     PrimeNG's own built-in spacing along with it, so the chevron ended up
+     flush against the label text with no gap at all. */
+  gap: 0.375rem;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;

@@ -5,7 +5,7 @@ import { UIChart } from 'primeng/chart';
 import { Tooltip } from 'primeng/tooltip';
 import { apiDateRangeForPeriod } from '@/lib/period';
 import { formatCurrency, sum } from '@/lib/format';
-import { horizontalBarData, horizontalBarOptions } from '@/lib/chart-utils';
+import { HORIZONTAL_BAR_PLUGINS, horizontalBarData, horizontalBarOptions } from '@/lib/chart-utils';
 import { BAR_COLORS } from '@/lib/brand-colors';
 import { ReportLink } from '@/dashboard/report-link/report-link';
 
@@ -73,6 +73,7 @@ export class SalesByDepartment {
   protected readonly rows = signal<DepartmentSales[]>([]);
   protected readonly chartData = signal(horizontalBarData([], [], BAR_COLORS));
   protected readonly chartOptions = horizontalBarOptions((v) => formatCurrency(v));
+  protected readonly HORIZONTAL_BAR_PLUGINS = HORIZONTAL_BAR_PLUGINS;
   protected readonly total = signal(0);
 
   constructor() {
