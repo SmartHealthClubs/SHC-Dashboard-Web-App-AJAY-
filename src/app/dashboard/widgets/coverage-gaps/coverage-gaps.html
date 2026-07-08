@@ -31,8 +31,20 @@
 
           @if (statusOf(row) === 'pending') {
             <div class="flex shrink-0 gap-1.5">
-              <p-button label="Approve" size="small" [outlined]="true" severity="success" (onClick)="resolve(row.id, 'approved')" />
-              <p-button label="Disapprove" size="small" [outlined]="true" severity="danger" (onClick)="resolve(row.id, 'denied')" />
+              <p-button
+                label="Approve"
+                size="small"
+                [outlined]="true"
+                styleClass="!border-status-positive !text-status-positive hover:!bg-status-positive/10"
+                (onClick)="resolve(row.id, 'approved')"
+              />
+              <p-button
+                label="Disapprove"
+                size="small"
+                [outlined]="true"
+                styleClass="!border-status-negative !text-status-negative hover:!bg-status-negative/10"
+                (onClick)="resolve(row.id, 'denied')"
+              />
             </div>
           } @else {
             <p-tag [severity]="statusOf(row) === 'approved' ? 'secondary' : 'danger'" [value]="statusOf(row) === 'approved' ? 'Approved' : 'Denied'" />

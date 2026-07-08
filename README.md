@@ -68,28 +68,31 @@ npm run build
 
 Outputs to `dist/shc-dashboard-angular`.
 
-## Known simplifications vs. the React app
+## Cosmetic chrome notes
 
-Disclosed here rather than silently — see the port's final summary for the full list:
+A follow-up cleanup pass closed the gaps between PrimeNG's stock component chrome and the React
+app's shadcn look:
 
-- Shadcn's custom dropdown-menu chrome (role-switcher, location-switcher, period control) is
-  approximated with PrimeNG `p-select`/`p-popover` + a CSS pill wrapper, not a pixel-identical
-  recreation of the original Radix/Base UI dropdown styling.
-- `p-tag` has no direct "outline" variant, so a couple of secondary badges render as PrimeNG's
-  standard filled `secondary` tag instead of the React app's bordered-outline look.
-- Coverage gaps' Approve/Disapprove buttons use PrimeNG's `success`/`danger` severities rather than
-  the exact custom green/red hex the React app used.
-
-None of these affect data, scoping, or behavior — only minor chrome on a handful of interactive
-controls.
+- **Dropdown pills** (role switcher, location switcher, period control) — the trigger stays a
+  hand-styled pill (`.pill-select-host` in `src/styles.css`) with an icon inside the same bordered
+  box; the `p-select` dropdown *overlay* panel (a floating portal `.pill-select-host` can't reach
+  with scoped CSS) and its option hover/selected colors, plus the role switcher's `p-popover`
+  panel, are themed via component tokens in `src/theme/shc-preset.ts` instead — the
+  PrimeNG-idiomatic way to theme a floating panel, and it keeps hover/focus/open states correct for
+  free.
+- **Outline tags** — `p-tag` has no built-in outlined variant, so `.tag-outline` in
+  `src/styles.css` (transparent background, bordered, navy text) is applied via `styleClass` to the
+  two spots the React app used `<Badge variant="outline">`: widget-placeholder-card's scope tag and
+  Attendance's "Classes & Programs" tag.
+- **Coverage gaps' Approve/Disapprove buttons** use the exact SHC hex (`--color-status-positive`
+  `#1FB68A` / `--color-status-negative` `#E5544B`) via Tailwind's `!`-important utility classes,
+  not PrimeNG's built-in `success`/`danger` severity colors.
 
 ## Docs carried over from the React repo
 
 - `docs/api/*.md` — API reference for the 3 live-wired endpoints (orderStatistics/orderReport,
   memberBookingReport), including live-vs-documented field drift notes (e.g. `UserBarcode` vs the
   PDF's `Barcode`).
+- `SHC_Dashboard_Build_Brief.md` — the original product/build spec.
 - `SHC_Dashboard_HANDOFF.md` — full project handoff notes (copied from the React repo's
-  `HANDOFF.md`). **Note**: the React repo has no separate "build brief" file — the original build
-  spec was delivered via chat at project kickoff and was never saved as its own document, so there
-  was no `SHC_Dashboard_Build_Brief.md` to copy. `SHC_Dashboard_HANDOFF.md` is the closest and most
-  complete source of the product/architecture decisions.
+  `HANDOFF.md`), including the full history of API-wiring decisions and gotchas.

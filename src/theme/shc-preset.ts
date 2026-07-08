@@ -74,5 +74,43 @@ export const ShcPreset = definePreset(Aura, {
         },
       },
     },
+    // Select's own trigger chrome is stripped back to nothing by
+    // .pill-select-host in styles.css (location-switcher / period-control
+    // own the actual pill border/bg so an icon can sit inside the same
+    // box) — but the dropdown OVERLAY is a separate floating panel that
+    // scoped CSS can't reach, so its shape/colors and the option
+    // hover/selected states have to be themed here instead.
+    select: {
+      colorScheme: {
+        light: {
+          overlay: {
+            background: '#ffffff',
+            borderColor: '#e1e8ec',
+            borderRadius: '0.875rem',
+          },
+          option: {
+            focusBackground: '#f0f4f6',
+            focusColor: '#1e2f51',
+            selectedBackground: '#dafbff',
+            selectedColor: '#1e2f51',
+            selectedFocusBackground: '#dafbff',
+            selectedFocusColor: '#1e2f51',
+          },
+        },
+      },
+    },
+    // Role switcher's "Demo control" panel — shadcn's DropdownMenuContent
+    // equivalent (rounded-lg card, subtle border, matching item hover).
+    popover: {
+      colorScheme: {
+        light: {
+          root: {
+            background: '#ffffff',
+            borderColor: '#e1e8ec',
+            borderRadius: '0.875rem',
+          },
+        },
+      },
+    },
   },
 });
